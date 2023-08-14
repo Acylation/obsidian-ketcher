@@ -1,5 +1,5 @@
 import { Ketcher } from "ketcher-core";
-import { Notice, TextFileView } from "obsidian";
+import { Notice, TextFileView, WorkspaceLeaf } from "obsidian";
 import React from "react";
 import ReactDOM from "react-dom";
 import KetcherReact from "./KetcherReact";
@@ -9,14 +9,8 @@ export const VIEW_TYPE_KET = "ket-view";
 export class KetView extends TextFileView {
 	ketcher: Ketcher;
 
-	getViewData() {
-		return this.data;
-	}
-
-	// If clear is set, then it means we're opening a completely different file.
-	setViewData(data: string, _clear: boolean) {
-		this.data = data;
-
+	constructor(leaf: WorkspaceLeaf) {
+		super(leaf);
 		ReactDOM.unmountComponentAtNode(this.containerEl.children[1]);
 		const container = this.containerEl.children[1];
 		ReactDOM.render(
@@ -35,7 +29,23 @@ export class KetView extends TextFileView {
 		);
 	}
 
-	clear() {}
+	getViewData() {
+		return this.data;
+	}
+
+	// If clear is set, then it means we're opening a completely different file.
+	setViewData(data: string, _clear: boolean) {
+		this.data = data;
+
+		if (_clear) {
+			this.ketcher.editor.clear();
+			this.ketcher.setMolecule(this.data);
+			//@ts-ignore undocumented
+			this.ketcher.editor.historyStack = [];
+		}
+	}
+
+	clear() { }
 
 	getViewType() {
 		return VIEW_TYPE_KET;
@@ -55,5 +65,6 @@ export class KetView extends TextFileView {
 
 	async onClose() {
 		ReactDOM.unmountComponentAtNode(this.containerEl.children[1]);
+		await super.onClose();
 	}
 }
